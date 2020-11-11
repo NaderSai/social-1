@@ -212,138 +212,143 @@
              }
 
              function buildPopup(json, ownerUserId) {
-                 var portal = eXo.env.portal;
-                 var relationStatus = json.relationshipType;
-                 var currentViewerId = portal.userName;
-                 var action = null;
-                 var labels = opts.labels;
-                 var isDeleted = json.deleted;
-                 var isEnable = json.enable;
+                 if (tiptip_content.data("ownerUserId") !== ownerUserId) {
+                     tiptip_content.data("ownerUserId", ownerUserId);
+                     initPopup(ownerUserId);
 
-                 if (currentViewerId != ownerUserId && !isDeleted) {
+                     var portal = eXo.env.portal;
+                     var relationStatus = json.relationshipType;
+                     var currentViewerId = portal.userName;
+                     var action = null;
+                     var labels = opts.labels;
+                     var isDeleted = json.deleted;
+                     var isEnable = json.enable;
 
-                     action = $('<i/>', {
-                         "class": "connect uiIcon uiConnectUserTiptip uiIconInviteUser",
-                         "data-action": "Invite:" + ownerUserId,
-                         "onclick": "takeAction(this)"
-                     });
+                     if (currentViewerId != ownerUserId && !isDeleted) {
 
-                     //
-                     if (relationStatus == "pending") { // Viewing is not owner
                          action = $('<i/>', {
-                             "class": "connect uiIcon uiConnectUserTiptip uiIconAcceptUser",
-                             "data-action": "Accept:" + ownerUserId,
-                             "onclick": "takeAction(this)"
+                             "class" : "connect uiIcon uiConnectUserTiptip uiIconInviteUser",
+                             "data-action" : "Invite:" + ownerUserId,
+                             "onclick" : "takeAction(this)"
                          });
-                     } else if (relationStatus == "waiting") { // Viewing is owner
-                         action = $('<i/>', {
-                             "class": "connect uiIcon uiConnectUserTiptip uiIconDisconnectUser",
-                             "data-action":"Revoke:" + ownerUserId,
-                             "onclick":"takeAction(this)"
-                         });
-                     } else if (relationStatus == "confirmed") { // Had Connection
-                         action = $('<i/>', {
-                             "class":"connect uiIcon uiConnectUserTiptip uiIconDisconnectUser",
-                             "data-action":"Disconnect:" + ownerUserId,
-                             "onclick":"takeAction(this)"
-                         });
-                     } else if (relationStatus == "ignored") { // Connection is removed
-                         action = $('<i/>', {
-                             "class":"connect uiIcon uiConnectUserTiptip uiIconInviteUser",
-                             "data-action":"Invite:" + ownerUserId,
-                             "onclick":"takeAction(this)"
-                         });
+
+                         //
+                         if (relationStatus == "pending") { // Viewing is not owner
+                             action = $('<i/>', {
+                                 "class" : "connect uiIcon uiConnectUserTiptip uiIconAcceptUser",
+                                 "data-action" : "Accept:" + ownerUserId,
+                                 "onclick" : "takeAction(this)"
+                             });
+                         } else if (relationStatus == "waiting") { // Viewing is owner
+                             action = $('<i/>', {
+                                 "class" : "connect uiIcon uiConnectUserTiptip uiIconDisconnectUser",
+                                 "data-action" : "Revoke:" + ownerUserId,
+                                 "onclick" : "takeAction(this)"
+                             });
+                         } else if (relationStatus == "confirmed") { // Had Connection
+                             action = $('<i/>', {
+                                 "class" : "connect uiIcon uiConnectUserTiptip uiIconDisconnectUser",
+                                 "data-action" : "Disconnect:" + ownerUserId,
+                                 "onclick" : "takeAction(this)"
+                             });
+                         } else if (relationStatus == "ignored") { // Connection is removed
+                             action = $('<i/>', {
+                                 "class" : "connect uiIcon uiConnectUserTiptip uiIconInviteUser",
+                                 "data-action" : "Invite:" + ownerUserId,
+                                 "onclick" : "takeAction(this)"
+                             });
+                         }
+
                      }
 
-                 }
-
-                 var popupContentContainer = $("<div/>");
-                 var popupContent = $("<table/>", {
-                     "id":"tipName"
-                 });
-                 var tbody = $("<tbody/>");
-                 var tr = $("<tr/>");
-                 var tdAvatar = $("<td/>", {
-                     "width":"50px"
-                 });
-
-                 var aAvatar = $("<a/>", {
-                     "target":"_self",
-                     "href":json.profileUrl,
-                 });
-
-                 aAvatar.css({
-                     "background-image":"url("+json.avatarURL+")",
-                     "display": "block",
-                     "height": "50px",
-                     "background-position": "center",
-                     "background-size": "cover",
-                     "border-radius": "50%"
-                 });
-
-                 tdAvatar.append(aAvatar);
-
-                 var tdProfile = $("<td/>",{
-                     "id": "profileName"
-                 });
-                 var fullName = json.fullName;
-                 if (!isEnable){
-                     fullName=fullName + " (" + labels.Disabled +")";
-                 }
-                 var aProfile = $("<a/>", {
-                     "target":"_self",
-                     "href":json.profileUrl,
-                     "text":fullName
-                 });
-
-                 tdProfile.append(aProfile);
-
-                 if (json.position) {
-                     var brPosition = $("<br>");
-                     var spanPosition = $("<span/>", {
-                         "font-weight":"normal",
-                         "text":json.position
+                     var popupContentContainer = $("<div/>");
+                     var popupContent = $("<table/>", {
+                         "id" : "tipName"
                      });
-                     tdProfile.append(brPosition);
-                     tdProfile.append(spanPosition);
-                 }
+                     var tbody = $("<tbody/>");
+                     var tr = $("<tr/>");
+                     var tdAvatar = $("<td/>", {
+                         "width" : "50px"
+                     });
 
-                 tr.append(tdAvatar).append(tdProfile);
-                 tbody.append(tr);
-                 popupContent.append(tbody);
-                 popupContentContainer.append(popupContent);
+                     var aAvatar = $("<a/>", {
+                         "target" : "_self",
+                         "href" : json.profileUrl,
+                     });
 
-                 var divUIAction;
-                 var containerProcess = $.Deferred();
-                 if (currentViewerId != ownerUserId && !isDeleted) {
-                     divUIAction = $("<div/>", {
-                         "class":"uiAction connectAction"
-                     }).append(action);
+                     aAvatar.css({
+                         "background-image" : "url(" + json.avatarURL + ")",
+                         "display" : "block",
+                         "height" : "50px",
+                         "background-position" : "center",
+                         "background-size" : "cover",
+                         "border-radius" : "50%"
+                     });
 
-                     if(eXo.social && eXo.social.tiptip && eXo.social.tiptip.extraActions) {
-                         for (var index = 0; index < eXo.social.tiptip.extraActions.length; index++) {
-                             var extraAction = eXo.social.tiptip.extraActions[index];
-                             if(extraAction.appendContentTo && (!extraAction.test || extraAction.test(popupContentContainer))) {
-                                 extraAction.appendContentTo(divUIAction, ownerUserId);
+                     tdAvatar.append(aAvatar);
+
+                     var tdProfile = $("<td/>", {
+                         "id" : "profileName"
+                     });
+                     var fullName = json.fullName;
+                     if (!isEnable) {
+                         fullName = fullName + " (" + labels.Disabled + ")";
+                     }
+                     var aProfile = $("<a/>", {
+                         "target" : "_self",
+                         "href" : json.profileUrl,
+                         "text" : fullName
+                     });
+
+                     tdProfile.append(aProfile);
+
+                     if (json.position) {
+                         var brPosition = $("<br>");
+                         var spanPosition = $("<span/>", {
+                             "font-weight" : "normal",
+                             "text" : json.position
+                         });
+                         tdProfile.append(brPosition);
+                         tdProfile.append(spanPosition);
+                     }
+
+                     tr.append(tdAvatar).append(tdProfile);
+                     tbody.append(tr);
+                     popupContent.append(tbody);
+                     popupContentContainer.append(popupContent);
+
+                     var divUIAction;
+                     var containerProcess = $.Deferred();
+                     if (currentViewerId != ownerUserId && !isDeleted) {
+                         divUIAction = $("<div/>", {
+                             "class" : "uiAction connectAction"
+                         }).append(action);
+
+                         if (eXo.social && eXo.social.tiptip && eXo.social.tiptip.extraActions) {
+                             for (var index = 0; index < eXo.social.tiptip.extraActions.length; index++) {
+                                 var extraAction = eXo.social.tiptip.extraActions[index];
+                                 if (extraAction.appendContentTo && (!extraAction.test || extraAction.test(popupContentContainer))) {
+                                     extraAction.appendContentTo(divUIAction, ownerUserId);
+                                 }
                              }
                          }
-                     }
 
-                     addExtensions(divUIAction, ownerUserId).then(() => {
+                         addExtensions(divUIAction, ownerUserId).then(() => {
+                             containerProcess.resolve();
+                         });
+                     } else {
                          containerProcess.resolve();
-                     });
-                 } else {
-                     containerProcess.resolve();
-                 }
-
-                 containerProcess.then(() => {
-                     if (divUIAction) {
-                         popupContentContainer.append(divUIAction);
                      }
 
-                     tiptip_content.empty();
-                     tiptip_content.append(popupContentContainer);
-                 });
+                     containerProcess.then(() => {
+                         if (divUIAction) {
+                             popupContentContainer.append(divUIAction);
+                         }
+
+                         tiptip_content.empty();
+                         tiptip_content.append(popupContentContainer);
+                     });
+                 }
              }
 
              async function addExtensions(divUIAction, ownerUserId) {
