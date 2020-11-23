@@ -23,8 +23,10 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 
 import javax.annotation.security.RolesAllowed;
@@ -36,15 +38,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.CacheControl;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
 import org.exoplatform.commons.utils.ListAccess;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
 import org.exoplatform.social.core.manager.IdentityManager;
@@ -57,13 +58,16 @@ import org.exoplatform.social.rest.api.SpaceMembershipRestResources;
 import org.exoplatform.social.rest.entity.CollectionEntity;
 import org.exoplatform.social.rest.entity.DataEntity;
 import org.exoplatform.social.rest.entity.SpaceMembershipEntity;
+import org.exoplatform.social.rest.impl.user.UserRestResourcesV1;
 import org.exoplatform.social.service.rest.api.VersionResources;
 import org.exoplatform.social.service.utils.LogUtils;
 
 @Path(VersionResources.VERSION_ONE + "/social/spacesMemberships")
 @Api(tags = VersionResources.VERSION_ONE + "/social/spacesMemberships", value = VersionResources.VERSION_ONE + "/social/spacesMemberships", description = "Managing memberships of users in a space")
 public class SpaceMembershipRestResourcesV1 implements SpaceMembershipRestResources {
-  
+
+  private static final Log LOG = ExoLogger.getLogger(UserRestResourcesV1.class);
+
   private static final String SPACE_PREFIX = "/spaces/";
 
   private SpaceService spaceService;
@@ -351,7 +355,7 @@ public class SpaceMembershipRestResourcesV1 implements SpaceMembershipRestResour
     @ApiResponse (code = 404, message = "Resource not found"),
     @ApiResponse (code = 412, message = "Precondition is not acceptable. For instance, the last manager membership could not be removed."),
     @ApiResponse (code = 500, message = "Internal server error due to data encoding") })
-  public Response deleteSpaceMembershipById(@Context UriInfo uriInfo,
+  public Response deleteSpaceMembershipById(@Context UriInfo uriInfo,@Context HttpHeaders httpHeaders,
                                             @ApiParam(value = "Space membership id which is in format spaceName:userName:role, ex: my_space:root:manager", required = true) @PathParam("id") String id,
                                             @ApiParam(value = "Asking for a full representation of a specific subresource if any", required = false) @QueryParam("expand") String expand) throws Exception {
     String[] idParams = RestUtils.getPathParam(uriInfo, "id").split(":");
@@ -371,7 +375,26 @@ public class SpaceMembershipRestResourcesV1 implements SpaceMembershipRestResour
     }
     //
     String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
-    if (! authenticatedUser.equals(targetUser) && ! spaceService.isSuperManager(authenticatedUser) && ! spaceService.isManager(space, authenticatedUser)) {
+
+    String authHeader= null;
+    try {
+      authHeader = httpHeaders.getRequestHeader(HttpHeaders.AUTHORIZATION).get(0);
+    }catch (Exception e){
+      LOG.debug("No such authorization header in the url");
+    }
+    if (authHeader != null && authHeader.toLowerCase().startsWith("basic")) {
+
+      String base64Credentials = authHeader.substring("Basic".length()).trim();
+      byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+      String credentials = new String(credDecoded, StandardCharsets.UTF_8);
+
+      final String[] values = credentials.split(":", 2);
+      if(values[0].equals(targetUser) || ! spaceService.isSuperManager(values[0]) || ! spaceService.isManager(space, values[0])){
+        throw new WebApplicationException(Response.Status.UNAUTHORIZED);
+      }
+    }
+
+    if ( authenticatedUser.equals(targetUser) || ! spaceService.isSuperManager(authenticatedUser) || ! spaceService.isManager(space, authenticatedUser)) {
       throw new WebApplicationException(Response.Status.UNAUTHORIZED);
     }
     String role = idParams[2];

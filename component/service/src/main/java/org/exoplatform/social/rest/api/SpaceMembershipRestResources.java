@@ -25,6 +25,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -90,7 +91,7 @@ public interface SpaceMembershipRestResources extends SocialRest {
    */
   @DELETE
   @Path("{id}/{spacesPrefix}/{spacePrettyName}")
-  public abstract Response deleteSpaceMembershipById(@Context UriInfo uriInfo,
+  public abstract Response deleteSpaceMembershipById(@Context UriInfo uriInfo,@Context HttpHeaders httpHeaders,
                                                      @PathParam("id") String id,
                                                      @QueryParam("expand") String expand) throws Exception;
 
