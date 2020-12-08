@@ -513,4 +513,33 @@ public class IdentityRestResourcesV1 implements IdentityRestResources {
     }
     return EntityBuilder.getResponse(collectionIdentity, uriInfo, RestUtils.getJsonMediaType(), Response.Status.OK);
   }
+
+  @GET
+  @Path("{currentUserId}/checkConnectionsWithExternal/{userId}")
+  @RolesAllowed("users")
+  @ApiOperation(value = "Check if current user have external users in connections",
+      httpMethod = "GET",
+      response = Response.class,
+      notes = "This returns boolean true if current identity have external user and itsn't in his connections.")
+  @ApiResponses(value = {
+      @ApiResponse(code = 200, message = "Request fulfilled"),
+      @ApiResponse(code = 500, message = "Internal server error"),
+      @ApiResponse(code = 400, message = "Invalid query input") })
+  public Response CheckConnectionsWithExternal(@Context UriInfo uriInfo,
+                                               @ApiParam(value = "The given current identity id", required = true) @PathParam("currentUserId") String currentUserId,
+                                               @ApiParam(value = "The given userId", required = true) @PathParam("userId") String userId) throws Exception {
+
+    RelationshipManager relationshipManager = CommonsUtils.getService(RelationshipManager.class);
+
+    Identity authenticatedUser = CommonsUtils.getService(IdentityManager.class)
+                                             .getOrCreateIdentity(OrganizationIdentityProvider.NAME, currentUserId);
+
+    List<Identity> currentUserConnections = Arrays.asList(relationshipManager.getConnections(authenticatedUser).load(0, 0));
+
+    Identity withIdentity = CommonsUtils.getService(IdentityManager.class)
+                                        .getOrCreateIdentity(OrganizationIdentityProvider.NAME, userId);
+
+    boolean check = !currentUserConnections.contains(withIdentity) && withIdentity.getProfile().getProperty("external") != null && withIdentity.getProfile().getProperty("external").equals("true");
+    return Response.ok().entity("{\"result\":\"" + check + "\"}").build();
+  }
 }
